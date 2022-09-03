@@ -1,0 +1,16 @@
+env:
+    GH_TOKEN: ENCRYPTED[9514df69bdd78c5263ece439a6986b6548b88ec1fde8da2f94e54513c845806878a476b70e97f2adb64f3d1fc48d2c5a]
+
+task:
+  name: LLVM Toolchain
+  timeout_in: 120m
+  container: panchajanya1999/archlinux:latest
+      image:
+      cpu: 8
+      memory: 32G
+
+  Get-deps_script:
+       - bash ci.sh deps
+
+  Deploy-builder_script:
+      - bash build.sh

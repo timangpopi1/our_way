@@ -26,10 +26,17 @@ function do_binutils() {
 }
 
 function do_deps() {
-    # We only run this when running on GitHub Actions
-    [[ -z ${GITHUB_ACTIONS:-} ]] && return 0
-
-    sudo apt-get install -y --no-install-recommends \
+    export PATH=/usr/bin/core_perl:$PATH
+    git config --global user.name "greenforce-bot"
+    git config --global user.email "85951498+greenforce-bot@users.noreply.github.com"
+    mkdir -p ~/.git/hooks
+    git config --global core.hooksPath ~/.git/hooks
+    curl -Lo ~/.git/hooks/commit-msg https://review.lineageos.org/tools/hooks/commit-msg
+    chmod u+x ~/.git/hooks/commit-msg
+    get_distro_name=$(source /etc/os-release && echo ${NAME})
+    case "$get_distro_name" in
+    "Ubuntu")
+        sudo apt-get install -y --no-install-recommends \
         bc \
         bison \
         ca-certificates \
@@ -50,6 +57,8 @@ function do_deps() {
         texinfo \
         xz-utils \
         zlib1g-dev
+    ;;
+    esac
 }
 
 function do_kernel() {
