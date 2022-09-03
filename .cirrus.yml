@@ -1,11 +1,11 @@
 env:
-    GH_TOKEN: ENCRYPTED[9514df69bdd78c5263ece439a6986b6548b88ec1fde8da2f94e54513c845806878a476b70e97f2adb64f3d1fc48d2c5a]
+    GH_TOKEN: ENCRYPTED[a1e1b1cb57b63cad7e5cd52cccf152f13120b4b7855ad08d069fa178266618946a53202ed150a2ccdc25f3d522894c42]
 
 task:
   name: LLVM Toolchain
   timeout_in: 120m
-  container: panchajanya1999/archlinux:latest
-      image:
+  container:
+      image: panchajanya1999/archlinux:latest
       cpu: 8
       memory: 32G
 
