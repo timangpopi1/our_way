@@ -87,7 +87,7 @@ llvm_commit_url="https://github.com/llvm/llvm-project/commit/$short_llvm_commit"
 
 binutils_version="$(ls | grep "^binutils-" | sed "s/binutils-//g")"
 clang_version="$(install/bin/clang --version | head -n1 | cut -d' ' -f4)"
-rel_msg="Automated build of LLVM + Clang $clang_version as of commit [$short_llvm_commit]($llvm_commit_url) and binutils $binutils_version."
+rel_msg="Automated build of LLVM + Clang $clang_version as of commit [$short_llvm_commit]($llvm_commit_url) and binutils $binutils_version"
 
 # Push to GitHub
 # Update Git repository
@@ -104,19 +104,19 @@ template=$(echo -e "
 Clang version: $clang_version
 Binutils version: $binutils_version
 LLVM repo commit: $commit_msg
-Link: $llvm_commit_url
-")
+Link: $llvm_commit_url")
 
 git commit -m "greenforce: Bump to $(date '+%Y%m%d') build" -m "$template" --signoff
 git push
 popd
-get=$(du -sh "install")
+get=$(du -sh "install" | sed -i 's/	install//g')
 cc_version=$(install/bin/clang --version | head -n1)
-echo "Repo size ${get}B"
+echo "Repo size: ${get}B"
 echo "clang version: ${cc_version}"
 
 #tar -czf "$files" $(pwd)/clang-llvm/*
-echo "$rel_msg" >> body
+rel_msg+=" (Repo size: ${get}B)"
+echo "${rel_msg}." >> body
 
 if [[ $status == success ]]; then
     push_tag() {
@@ -156,11 +156,3 @@ if [[ $status == success ]]; then
         fi
     fi
 fi
-
-#./github-release upload \
-    #--security-token "$GH_TOKEN" \
-    #--user "greenforce-project" \
-    #--repo "clang-llvm" \
-    #--tag "$rel_date" \
-    #--name "$files" \
-    #--file "$files" || echo "Maybe failed :/" && status_push="confused"
