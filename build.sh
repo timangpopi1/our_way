@@ -91,7 +91,7 @@ rel_msg="Automated build of LLVM + Clang $clang_version as of commit [$short_llv
 
 # Push to GitHub
 # Update Git repository
-#files="clang-$clang_version-$rel_date-$rel_time.tar.gz"
+export files="clang-$clang_version-$rel_date-$rel_time.tar.gz"
 git config --global user.name "greenforce-auto-build"
 git config --global user.email "greenforce-auto-build@users.noreply.github.com"
 
@@ -110,7 +110,8 @@ git commit -m "greenforce: Bump to $(date '+%Y%m%d') build" -m "$template" --sig
 git push
 popd
 
-#tar -czf "$files" $(pwd)/clang-llvm/*
+tar -czf "$files" $(pwd)/clang-llvm/*
+[[ -e "$(pwd)/$files" ]] && path_files="$(pwd)/$files"
 echo "${rel_msg}." > body
 
 if [[ $status == success ]]; then
@@ -132,6 +133,17 @@ if [[ $status == success ]]; then
             --name "build.log" \
             --file "$log/build.log" || echo "Failed to push"
     }
+  if [[ -n "$path_files" ]]; then
+    push_tar() {
+        ./gh-release upload \
+            --security-token "$GH_TOKEN" \
+            --user "greenforce-project" \
+            --repo "clang-llvm" \
+            --tag "$rel_date" \
+            --name "$files" \
+            --file "$path_files" || echo "Failed to push files"
+    }
+  fi
     if [[ $(push_tag) == "Tag already exists" ]]; then
         if ! [[ -f "$(pwd)/gh-release" ]]; then
             echo "gh-release file not found, pls check it!" && exit
@@ -148,6 +160,15 @@ if [[ $status == success ]]; then
             chmod +x $(pwd)/gh-release
             sleep 10
             push_log || echo "Failed again, Build.log cannot push into github release!"
+        fi
+    fi
+    if [[ $(push_tar) == "Failed to push files" ]]; then
+        if ! [[ -f "$(pwd)/gh-release" ]]; then
+            echo "gh-release file not found, pls check it!" && exit
+        else
+            chmod +x $(pwd)/gh-release
+            sleep 10
+            push_tar || echo "Failed again, $files cannot push into github releases."
         fi
     fi
 fi
