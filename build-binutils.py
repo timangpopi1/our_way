@@ -153,7 +153,9 @@ def invoke_configure(build_folder, install_folder, root_folder, target,
         '--disable-gdb', '--disable-werror', '--enable-deterministic-archives',
         '--enable-new-dtags', '--enable-plugins', '--enable-threads',
         '--prefix=%s' % install_folder.as_posix(), '--quiet',
-        '--with-system-zlib'
+        '--with-system-zlib', '--disable-docs', '--disable-libdecnumber',
+        '--disable-readline', '--disable-gdbserver',
+        '--with-pkgversion=GNU Binutils'
     ]
     if host_arch:
         configure += [

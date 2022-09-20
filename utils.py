@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+x#!/usr/bin/env python3
 # Description: Common helper functions
 
 import hashlib
@@ -22,7 +22,7 @@ def current_binutils():
     Simple getter for current stable binutils release
     :return: The current stable release of binutils
     """
-    return "binutils-2.34"
+    return "binutils-2.35.2"
 
 
 def download_binutils(folder):
