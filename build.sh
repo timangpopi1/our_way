@@ -110,7 +110,7 @@ git commit -m "greenforce: Bump to $(date '+%Y%m%d') build" -m "$template" --sig
 git push
 popd
 
-tar -czf "$files" $(pwd)/clang-llvm/*
+tar czf "$files" --absolute-names "$(pwd)/clang-llvm/*"
 [[ -e "$(pwd)/$files" ]] && path_files="$(pwd)/$files"
 echo "${rel_msg}." > body
 
