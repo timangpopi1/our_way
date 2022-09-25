@@ -98,7 +98,7 @@ git config --global user.email "greenforce-auto-build@users.noreply.github.com"
 pushd $(pwd)/clang-llvm
 rm -rf *
 cp -r ../install/* .
-[[ ! -e README.md && ! -f README.md ]] && wget https://github.com/greenforce-project/clang-llvm/raw/main/README.md
+[[ ! -e README.md ]] && wget https://github.com/greenforce-project/clang-llvm/raw/main/README.md
 git add -f .
 template=$(echo -e "
 Clang version: $clang_version
