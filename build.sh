@@ -96,7 +96,7 @@ git config --global user.name "greenforce-auto-build"
 git config --global user.email "greenforce-auto-build@users.noreply.github.com"
 
 pushd $(pwd)/clang-llvm
-rm -rf *
+rm -rf * .git
 cp -r ../install/* .
 [[ ! -e README.md ]] && wget https://github.com/greenforce-project/clang-llvm/raw/main/README.md
 git add -f .
@@ -105,9 +105,12 @@ Clang version: $clang_version
 Binutils version: $binutils_version
 LLVM repo commit: $commit_msg
 Link: $llvm_commit_url")
-
-git commit -m "greenforce: Bump to $(date '+%Y%m%d') build" -m "$template" --signoff
-git push
+git init
+git remote add origin https://github.com/greenforce-project/clang-llvm
+git checkout -b main
+git remote set-url origin https://${GH_TOKEN}@github.com/greenforce-project/clang-llvm
+git commit -m "greenforce: Bump to $(date '+%Y%m%d') build" -m "${template}" --signoff
+git push -fu origin main
 popd
 
 tar -czf "$files" $(pwd)/clang-llvm/*
