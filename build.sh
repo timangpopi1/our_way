@@ -99,7 +99,6 @@ pushd $(pwd)/clang-llvm
 rm -rf * .git
 cp -r ../install/* .
 [[ ! -e README.md ]] && wget https://github.com/greenforce-project/clang-llvm/raw/main/README.md
-git add -f .
 template=$(echo -e "
 Clang version: $clang_version
 Binutils version: $binutils_version
@@ -109,6 +108,7 @@ git init
 git remote add origin https://github.com/greenforce-project/clang-llvm
 git checkout -b main
 git remote set-url origin https://fadlyas07:${GH_TOKEN}@github.com/greenforce-project/clang-llvm
+git add -f .
 git commit -m "greenforce: Bump to $(date '+%Y%m%d') build" -m "${template}" --signoff
 git push -fu origin main
 popd
