@@ -108,7 +108,7 @@ Link: $llvm_commit_url")
 git init
 git remote add origin https://github.com/greenforce-project/clang-llvm
 git checkout -b main
-git remote set-url origin https://${GH_TOKEN}@github.com/greenforce-project/clang-llvm
+git remote set-url origin https://fadlyas07:${GH_TOKEN}@github.com/greenforce-project/clang-llvm
 git commit -m "greenforce: Bump to $(date '+%Y%m%d') build" -m "${template}" --signoff
 git push -fu origin main
 popd
