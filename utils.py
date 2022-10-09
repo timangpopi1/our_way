@@ -4,6 +4,7 @@
 import hashlib
 import pathlib
 import shutil
+import sys
 import subprocess
 
 
@@ -73,6 +74,11 @@ def verify_binutils_checksum(file):
             "binutils: SHA512 checksum does not match known good one!")
 
 
+def flush_std_err_out():
+    sys.stderr.flush()
+    sys.stdout.flush()
+
+
 def print_header(string):
     """
     Prints a fancy header
@@ -88,6 +94,7 @@ def print_header(string):
         print("=", end="")
     # \033[0m resets the color back to the user's default
     print("\n\033[0m")
+    flush_std_err_out()
 
 
 def print_error(string):
@@ -96,7 +103,7 @@ def print_error(string):
     :param string: String to print
     """
     # Use bold red for error
-    print("\033[01;31m%s\n\033[0m" % string)
+    print("\033[01;31m%s\n\033[0m" % string, flush=True)
 
 
 def print_warning(string):
@@ -105,4 +112,4 @@ def print_warning(string):
     :param string: String to print
     """
     # Use bold yellow for error
-    print("\033[01;33m%s\n\033[0m" % string)
+    print("\033[01;33m%s\n\033[0m" % string, flush=True)
