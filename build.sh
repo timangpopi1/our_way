@@ -47,14 +47,16 @@ mkdir -p "$log"
 JobsTotal="$(($(nproc --all)*4))"
 ./build-llvm.py \
     --clang-vendor "greenforce" \
-    --defines "LLVM_PARALLEL_COMPILE_JOBS=$JobsTotal LLVM_PARALLEL_LINK_JOBS=$JobsTotal CMAKE_C_FLAGS='-g0 -O3' CMAKE_CXX_FLAGS='-g0 -O3'" \
+    --defines "LLVM_PARALLEL_COMPILE_JOBS=$JobsTotal LLVM_PARALLEL_LINK_JOBS=$JobsTotal CMAKE_C_FLAGS='-g0 -O3' CMAKE_CXX_FLAGS='-g0 -O3' CMAKE_C_FLAGS='-march=native -mtune=native' CMAKE_CXX_FLAGS='-march=native -mtune=native'" \
     --pgo "kernel-defconfig-slim" \
     --projects "clang;lld;polly" \
     --no-update \
     --targets "ARM;AArch64" 2>&1 | tee "$log/build.log" && status=success || status=failed
 
 # Build binutils
-./build-binutils.py --targets arm aarch64
+./build-binutils.py \
+    --targets arm aarch64 \
+    --march native
 
 # Remove unused products
 rm -fr install/include install/lib/libclang-cpp.so.16git
