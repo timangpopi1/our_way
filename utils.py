@@ -2,7 +2,6 @@
 # Description: Common helper functions
 
 import hashlib
-import pathlib
 import shutil
 import sys
 import subprocess
@@ -37,34 +36,34 @@ def download_binutils(folder):
         # Remove any previous copies of binutils
         for entity in folder.glob('binutils-*'):
             if entity.is_dir():
-                shutil.rmtree(entity.as_posix())
+                shutil.rmtree(entity)
             else:
                 entity.unlink()
 
         # Download the tarball
         binutils_tarball = folder.joinpath(binutils + ".tar.xz")
-        subprocess.run([
-            "curl", "-LSs", "-o",
-            binutils_tarball.as_posix(),
+        curl_cmd = [
+            "curl", "-LSs", "-o", binutils_tarball,
             "https://ftp.gnu.org/gnu/binutils/" + binutils_tarball.name
-        ],
-                       check=True)
+        ]
+        subprocess.run(curl_cmd, check=True)
+
         # Extract the tarball then remove it
         subprocess.run(["tar", "-xJf", binutils_tarball.name],
                        check=True,
-                       cwd=folder.as_posix())
+                       cwd=folder)
         create_gitignore(binutils_folder)
         binutils_tarball.unlink()
 
 
-def verify_binutils_checksum(file):
+def verify_binutils_checksum(file_to_check):
     # Check the SHA512 checksum of the downloaded file with a known good one
     # The sha512.sum file from <sourceware.org> ships the SHA512 checksums
     # Link: https://sourceware.org/pub/binutils/releases/sha512.sum
     file_hash = hashlib.sha512()
-    with file.open("rb") as f:
+    with file_to_check.open("rb") as file:
         while True:
-            data = f.read(131072)
+            data = file.read(131072)
             if not data:
                 break
             file_hash.update(data)
@@ -87,10 +86,10 @@ def print_header(string):
     # Use bold cyan for the header so that the headers
     # are not intepreted as success (green) or failed (red)
     print("\033[01;36m")
-    for x in range(0, len(string) + 6):
+    for _ in range(0, len(string) + 6):
         print("=", end="")
-    print("\n== %s ==" % string)
-    for x in range(0, len(string) + 6):
+    print(f"\n== {string} ==")
+    for _ in range(0, len(string) + 6):
         print("=", end="")
     # \033[0m resets the color back to the user's default
     print("\n\033[0m")
@@ -103,7 +102,7 @@ def print_error(string):
     :param string: String to print
     """
     # Use bold red for error
-    print("\033[01;31m%s\n\033[0m" % string, flush=True)
+    print(f"\033[01;31m{string}\n\033[0m", flush=True)
 
 
 def print_warning(string):
@@ -112,4 +111,4 @@ def print_warning(string):
     :param string: String to print
     """
     # Use bold yellow for error
-    print("\033[01;33m%s\n\033[0m" % string, flush=True)
+    print(f"\033[01;33m{string}\n\033[0m", flush=True)
