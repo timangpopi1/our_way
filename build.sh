@@ -23,7 +23,7 @@ curl -Lo "$DIR/gh-release" https://github.com/fadlyas07/scripts/raw/master/githu
 [[ -f "$DIR/gh-release" ]] && chmod +x "$DIR/gh-release"
 
 # clone push repo
-git clone -j64 --single-branch "https://timangpopi1:$GH_TOKEN@github.com/greenforce-project/clang-llvm" -b main --depth=1
+git clone -j64 --single-branch "https://$GH_TOKEN@github.com/greenforce-project/clang-llvm" -b main --depth=1
 
 # clone LLVM repo
 git clone -j64 --single-branch "https://github.com/llvm/llvm-project" -b main --depth=1
@@ -101,17 +101,20 @@ pushd $(pwd)/clang-llvm
 rm -rf * .git
 cp -r ../install/* .
 [[ ! -e README.md ]] && wget https://github.com/greenforce-project/clang-llvm/raw/main/README.md
-template=$(echo -e "
+CommitMessage=$(echo -e "
 Clang version: $clang_version
 Binutils version: $binutils_version
 LLVM repo commit: $commit_msg
-Link: $llvm_commit_url")
+Link: $llvm_commit_url
+
+Releases:
+https://github.com/greenforce-project/clang-llvm/releases/download/${rel_date}/${files}")
 git init
 git remote add origin https://github.com/greenforce-project/clang-llvm
 git checkout -b main
-git remote set-url origin https://fadlyas07:${GH_TOKEN}@github.com/greenforce-project/clang-llvm
+git remote set-url origin https://${GH_TOKEN}@github.com/greenforce-project/clang-llvm
 git add -f .
-git commit -m "greenforce: Bump to $(date '+%Y%m%d') build" -m "${template}" --signoff
+git commit -m "greenforce: Bump to $(date '+%Y%m%d') build" -m "${CommitMessage}" --signoff
 git push -fu origin main
 popd
 
