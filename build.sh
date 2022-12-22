@@ -101,14 +101,16 @@ pushd $(pwd)/clang-llvm
 rm -rf * .git
 cp -r ../install/* .
 [[ ! -e README.md ]] && wget https://github.com/greenforce-project/clang-llvm/raw/main/README.md
-CommitMessage=$(echo -e "
+CommitMessage=$(echo "
 Clang version: $clang_version
 Binutils version: $binutils_version
 LLVM repo commit: $commit_msg
 Link: $llvm_commit_url
 
 Releases:
-https://github.com/greenforce-project/clang-llvm/releases/download/${rel_date}/${files}")
+    https://github.com/greenforce-project/clang-llvm/releases/download/${rel_date}/${files}
+
+")
 git init
 git remote add origin https://github.com/greenforce-project/clang-llvm
 git checkout -b main
