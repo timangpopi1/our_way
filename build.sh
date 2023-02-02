@@ -19,6 +19,9 @@ fi
 gcc glibc.c -o glibc
 export GlibcVersion="$(./glibc)"
 
+# Clone LLVM project repository
+git clone --single-branch https://github.com/llvm/llvm-project -b main --depth=1
+
 # Create push repo
 mkdir -p "${ScriptDir}/clang-llvm"
 
@@ -29,7 +32,7 @@ JobsTotal="$(($(nproc --all)*4))"
     --defines "LLVM_PARALLEL_COMPILE_JOBS=$JobsTotal LLVM_PARALLEL_LINK_JOBS=$JobsTotal CMAKE_C_FLAGS='-g0 -O3' CMAKE_CXX_FLAGS='-g0 -O3' CMAKE_C_FLAGS='-march=native -mtune=native' CMAKE_CXX_FLAGS='-march=native -mtune=native'" \
     --pgo "kernel-defconfig-slim" \
     --projects "clang;lld;polly" \
-    --shallow-clone \
+    --no-update \
     --targets "ARM;AArch64" && status=success || status=failed
 
 # Build binutils
