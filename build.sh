@@ -92,10 +92,24 @@ git init
 git remote add origin https://github.com/greenforce-project/clang-llvm
 git checkout -b main
 git remote set-url origin https://${GH_TOKEN}@github.com/greenforce-project/clang-llvm
-rm-rf gitignore .gitignore
+rm -rf gitignore .gitignore
 git add -f .
 git commit -m "greenforce: Bump to $(date '+%Y%m%d') build" -m "${CommitMessage}"
 git push -fu origin main
+popd
+
+# Set Git Config (2)
+git config --global user.name "fadlyas07"
+git config --global user.email "mhmmdfdlyas@gmail.com"
+
+pushd "${ScriptDir}/clang-llvm"
+if [[ -e "${ScriptDir}/clang-llvm/gitignore" ]]; then
+    rm -rf "${ScriptDir}/clang-llvm/gitignore"
+    git add . && git commit -am "git: Remove gitignore"
+    git push -f origin main
+else
+    echo "WARN: ${ScriptDir}/clang-llvm/gitignore not detected!"
+fi
 popd
 
 # Push to github releases
@@ -111,17 +125,17 @@ if [[ $status == success ]]; then
             --name "${ReleaseFriendlyDate}" \
             --description "$(cat body)" || echo "WARN: GitHub Tag already exists!"
     }
-  if [[ -n "${ReleasePathFile}" ]]; then
-    push_tar() {
-        ./GitHubRelease upload \
-            --security-token "${GH_TOKEN}" \
-            --user "greenforce-project" \
-            --repo "clang-llvm" \
-            --tag "${ReleaseDate}" \
-            --name "${ReleaseFileName}" \
-            --file "${ReleasePathFile}" || echo "ERROR: Failed to push files!"
-    }
-  fi
+    if [[ -n "${ReleasePathFile}" ]]; then
+        push_tar() {
+            ./GitHubRelease upload \
+                --security-token "${GH_TOKEN}" \
+                --user "greenforce-project" \
+                --repo "clang-llvm" \
+                --tag "${ReleaseDate}" \
+                --name "${ReleaseFileName}" \
+                --file "${ReleasePathFile}" || echo "ERROR: Failed to push files!"
+        }
+    fi
     if [[ $(push_tag) == "WARN: GitHub Tag already exists!" ]]; then
         if ! [[ -f "${ScriptDir}/GitHubRelease" ]]; then
             echo "ERROR: GitHubRelease file is not found, pls check it!" && exit
