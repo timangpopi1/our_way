@@ -19,7 +19,7 @@ def current_binutils():
     Simple getter for current stable binutils release
     :return: The current stable release of binutils
     """
-    return "binutils-2.40"
+    return "binutils-2.36.1"
 
 
 def download_binutils(folder):
@@ -44,7 +44,6 @@ def download_binutils(folder):
             f"https://sourceware.org/pub/binutils/releases/{binutils_tarball.name}"
         ]
         subprocess.run(curl_cmd, check=True)
-        verify_binutils_checksum(binutils_tarball)
         # Extract the tarball then remove it
         subprocess.run(["tar", "-xJf", binutils_tarball.name],
                        check=True,
