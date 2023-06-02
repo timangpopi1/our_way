@@ -72,20 +72,21 @@ BinutilsVersion="$(ls | grep "^binutils-" | sed "s/binutils-//g")"
 ClangVersion="$(install/bin/clang --version | head -n1 | cut -d' ' -f4)"
 ReleaseFileName="clang-${ClangVersion}-${ReleaseDate}-${ReleaseTime}.tar.gz"
 READMEmsg="This toolchain is built on ${DistroName}, which uses ${GlibcVersion}. Compatibility with older distributions cannot be guaranteed. Other libc implementations (such as musl) are not supported."
+GitHubLinkReleases="https://github.com/greenforce-project/clang-llvm/releases/download/${ReleaseDate}/${ReleaseFileName}"
 echo "Automated build of LLVM + Clang ${ClangVersion} as of commit [${ShortLLVMCommit}](${LLVMCommitURL}) and binutils ${BinutilsVersion}." > body
 
 # Push to GitHub Repository
 pushd "${ScriptDir}/clang-llvm"
 rm -rf * .git
 cp -r ../install/* .
-[[ ! -e README.md ]] && wget https://github.com/greenforce-project/clang-llvm/raw/2f11cf680896d7be7cbaefc82099fe92cfa92cd9/README.md
+[[ ! -e README.md ]] && wget https://raw.githubusercontent.com/greenforce-project/clang-llvm/317d604883875857c787298e1a0285c746905410/README.md
 sed -i "s/YouCanChangeThis/${READMEmsg}/g" ${ScriptDir}/clang-llvm/README.md
+sed -i "s/YouCanChangeThis2/${GitHubLinkReleases}/g" ${ScriptDir}/clang-llvm/README.md
 CommitMessage=$(echo "
 Clang version: ${ClangVersion}
 Binutils version: ${BinutilsVersion}
 LLVM repo commit: ${CommitMessage}
 Link: ${LLVMCommitURL}
-Releases: https://github.com/greenforce-project/clang-llvm/releases/download/${ReleaseDate}/${ReleaseFileName}
 
 ")
 git init
@@ -94,7 +95,7 @@ git checkout -b main
 git remote set-url origin https://${GH_TOKEN}@github.com/greenforce-project/clang-llvm
 rm -rf gitignore .gitignore
 git add -f .
-git commit -m "greenforce: Bump to $(date '+%Y%m%d') build" -m "${CommitMessage}"
+git commit -m "greenforce: Bump to $(date '+%Y%m%d') build" -m "${CommitMessage}" --signoff
 git push -fu origin main
 popd
 
