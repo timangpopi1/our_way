@@ -79,9 +79,9 @@ echo "Automated build of LLVM + Clang ${ClangVersion} as of commit [${ShortLLVMC
 pushd "${ScriptDir}/clang-llvm"
 rm -rf * .git
 cp -r ../install/* .
-[[ ! -e README.md ]] && wget https://raw.githubusercontent.com/greenforce-project/clang-llvm/317d604883875857c787298e1a0285c746905410/README.md
-sed -i "s/YouCanChangeThis/${READMEmsg}/g" ${ScriptDir}/clang-llvm/README.md
-sed -i "s/YouCanChangeThis2/${GitHubLinkReleases}/g" ${ScriptDir}/clang-llvm/README.md
+[[ ! -e README.md ]] && wget https://github.com/greenforce-project/clang-llvm/raw/1a1e295b868b4c5ddb2f89a3df9be92c1c6e8783/README.md
+sed -i "s/GithubReleaseLink/${GitHubLinkReleases}/g" ${ScriptDir}/clang-llvm/README.md
+sed -i "s/AboutHostCompability/${READMEmsg}/g" ${ScriptDir}/clang-llvm/README.md
 CommitMessage=$(echo "
 Clang version: ${ClangVersion}
 Binutils version: ${BinutilsVersion}
