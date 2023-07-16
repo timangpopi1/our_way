@@ -2,6 +2,15 @@
 # ---- Clang Build Script ----
 # Copyright (C) 2023 fadlyas07 <mhmmdfdlyas@gmail.com>
 
+# Function to show an informational message
+msg() {
+    echo -e "\e[1;32m$*\e[0m"
+}
+
+err() {
+    echo -e "\e[1;41m$*\e[0m"
+}
+
 ScriptDir=$(pwd)
 DistroName=$(source /etc/os-release && echo ${PRETTY_NAME})
 ReleaseDate="$(date '+%Y%m%d')" # ISO 8601 format
@@ -12,8 +21,25 @@ curl -Lo "${ScriptDir}/GitHubRelease" https://github.com/fadlyas07/scripts/raw/m
 if [[ -f "${ScriptDir}/GitHubRelease" ]]; then
     chmod +x "${ScriptDir}/GitHubRelease"
 else
-    echo "ERROR: GitHubRelease file is missing!" && exit 1
+    err "ERROR: GitHubRelease file is missing!" && exit 1
 fi
+
+# Inlined function to post a message
+export BOT_MSG_URL="https://api.telegram.org/bot$TOKEN"
+tg_post_msg() {
+	curl -s -X POST "$BOT_MSG_URL/sendMessage" -d chat_id="$CHATID" \
+	-d "disable_web_page_preview=true" \
+	-d "parse_mode=html" \
+	-d text="$1"
+}
+
+tg_post_build() {
+	curl --progress-bar -F document=@"$1" "$BOT_MSG_URL/sendDocument" \
+	-F chat_id="$2"  \
+	-F "disable_web_page_preview=true" \
+	-F "parse_mode=html" \
+	-F caption="$3"
+}
 
 # Compile glibc.c for glibc version
 gcc glibc.c -o glibc
@@ -26,19 +52,35 @@ git clone --single-branch https://github.com/llvm/llvm-project -b main --depth=1
 mkdir -p "${ScriptDir}/clang-llvm"
 
 # Build LLVM
+tg_post_msg "Greenforce clang compilation started at $(date)!"
+BuildStart=$(date +"%s")
 JobsTotal="$(($(nproc --all)*4))"
 ./build-llvm.py \
     --clang-vendor "greenforce" \
-    --defines "LLVM_PARALLEL_COMPILE_JOBS=$JobsTotal LLVM_PARALLEL_LINK_JOBS=$JobsTotal CMAKE_C_FLAGS='-g0 -O3' CMAKE_CXX_FLAGS='-g0 -O3' CMAKE_C_FLAGS='-march=native -mtune=native' CMAKE_CXX_FLAGS='-march=native -mtune=native'" \
+    --defines LLVM_PARALLEL_COMPILE_JOBS=$JobsTotal LLVM_PARALLEL_LINK_JOBS=$JobsTotal CMAKE_C_FLAGS='-g0 -O3' CMAKE_CXX_FLAGS='-g0 -O3' \
     --pgo "kernel-defconfig-slim" \
     --projects "clang;lld;polly" \
     --no-update \
-    --targets "ARM;AArch64" && status=success || status=failed
+    --targets "ARM;AArch64" 2>&1 | tee build.log
+
+# Check if the final clang binary exists or not.
+[ ! -f install/bin/clang-1* ] && {
+    status=failed
+    err "Building LLVM failed! Kindly check errors!!"
+    tg_post_build "build.log" "$CHATID" "Error Log"
+    exit 1
+}
+tg_post_build "build.log" "$CHATID" "Success Log"
 
 # Build binutils
+tg_post_msg "Building binutils..!"
 ./build-binutils.py \
-    --targets arm aarch64 \
-    --march native
+    --targets arm aarch64
+
+BuildEnd=$(date +"%s")
+BuildDiff=$((BuildEnd - BuildStart))
+BuildDiffMsg="$(($BuildDiff / 60)) minutes, $(($BuildDiff % 60)) seconds"
+tg_post_msg "Build Complete in ${BuildDiffMsg}"
 
 # Remove unused products
 rm -fr install/include install/lib/libclang-cpp.so.17git
@@ -67,24 +109,26 @@ pushd "${ScriptDir}/llvm-project"
 CommitMessage=$(git log --pretty="format:%s" | head -n1)
 ShortLLVMCommit="$(git rev-parse --short HEAD)"
 popd
+mkdir -p "${ScriptDir}/build-info"
+echo "$(install/bin/clang --version | head -n1)" > "${ScriptDir}/build-info/clang"
+echo "$(install/bin/ld.lld --version | head -n1)" > "${ScriptDir}/build-info/ld"
 LLVMCommitURL="https://github.com/llvm/llvm-project/commit/${ShortLLVMCommit}"
 BinutilsVersion="$(ls | grep "^binutils-" | sed "s/binutils-//g")"
 ClangVersion="$(install/bin/clang --version | head -n1 | cut -d' ' -f4)"
 ReleaseFileName="clang-${ClangVersion}-${ReleaseDate}-${ReleaseTime}.tar.gz"
-READMEmsg="This toolchain is built on ${DistroName}, which uses ${GlibcVersion}. Compatibility with older distributions cannot be guaranteed. Other libc implementations (such as musl) are not supported."
 GitHubLinkReleases="https://github.com/greenforce-project/clang-llvm/releases/download/${ReleaseDate}/${ReleaseFileName}"
-echo "Automated build of LLVM + Clang ${ClangVersion} as of commit [${ShortLLVMCommit}](${LLVMCommitURL}) and binutils ${BinutilsVersion}." > body
+READMEmsg="This toolchain is built on ${DistroName}, which uses ${GlibcVersion}. Compatibility with older distributions cannot be guaranteed. Other libc implementations (such as musl) are not supported."
+echo "Automated build of LLVM + Clang ${ClangVersion} as of commit [${ShortLLVMCommit}](${LLVMCommitURL}) and binutils ${BinutilsVersion}." > "${ScriptDir}/build-info/body"
 
 # Push to GitHub Repository
 pushd "${ScriptDir}/clang-llvm"
 rm -rf * .git
 cp -r ../install/* .
-[[ ! -e README.md ]] && wget https://github.com/greenforce-project/clang-llvm/raw/1a1e295b868b4c5ddb2f89a3df9be92c1c6e8783/README.md
-sed -i "s/GithubReleaseLink/${GitHubLinkReleases}/g" ${ScriptDir}/clang-llvm/README.md
+[[ ! -e README.md ]] && wget https://github.com/greenforce-project/clang-llvm/raw/763e83ec123f3d9be6b05956327c7a84808a63fa/README.md
 sed -i "s/AboutHostCompability/${READMEmsg}/g" ${ScriptDir}/clang-llvm/README.md
 CommitMessage=$(echo "
-Clang version: ${ClangVersion}
-Binutils version: ${BinutilsVersion}
+Clang version: $(cat ${ScriptDir}/build-info/clang)
+Binutils version: $(cat ${ScriptDir}/build-info/ld)
 LLVM repo commit: ${CommitMessage}
 Link: ${LLVMCommitURL}
 
@@ -109,14 +153,14 @@ if [[ -e "${ScriptDir}/clang-llvm/gitignore" ]]; then
     git add . && git commit -am "git: Remove gitignore"
     git push -f origin main
 else
-    echo "WARN: ${ScriptDir}/clang-llvm/gitignore not detected!"
+    msg "WARN: ${ScriptDir}/clang-llvm/gitignore not detected!"
 fi
 popd
 
 # Push to github releases
-tar -czf "${ReleaseFileName}" ${ScriptDir}/clang-llvm/*
+tar -czvf "${ReleaseFileName}" ${ScriptDir}/clang-llvm/*
 [[ -e "${ScriptDir}/${ReleaseFileName}" ]] && ReleasePathFile="${ScriptDir}/${ReleaseFileName}"
-if [[ $status == success ]]; then
+if [[ $status != failed ]]; then
     push_tag() {
         ./GitHubRelease release \
             --security-token "${GH_TOKEN}" \
@@ -124,35 +168,40 @@ if [[ $status == success ]]; then
             --repo "clang-llvm" \
             --tag "${ReleaseDate}" \
             --name "${ReleaseFriendlyDate}" \
-            --description "$(cat body)" || echo "WARN: GitHub Tag already exists!"
+            --description "$(cat ${ScriptDir}/build-info/body)" || echo "WARN: GitHub Tag already exists!"
     }
-    if [[ -n "${ReleasePathFile}" ]]; then
-        push_tar() {
-            ./GitHubRelease upload \
-                --security-token "${GH_TOKEN}" \
-                --user "greenforce-project" \
-                --repo "clang-llvm" \
-                --tag "${ReleaseDate}" \
-                --name "${ReleaseFileName}" \
-                --file "${ReleasePathFile}" || echo "ERROR: Failed to push files!"
-        }
-    fi
+    push_tar() {
+        ./GitHubRelease upload \
+            --security-token "${GH_TOKEN}" \
+            --user "greenforce-project" \
+            --repo "clang-llvm" \
+            --tag "${ReleaseDate}" \
+            --name "${ReleaseFileName}" \
+            --file "${ReleasePathFile}" || echo "ERROR: Failed to push files!"
+    }
     if [[ $(push_tag) == "WARN: GitHub Tag already exists!" ]]; then
         if ! [[ -f "${ScriptDir}/GitHubRelease" ]]; then
-            echo "ERROR: GitHubRelease file is not found, pls check it!" && exit
+            err "ERROR: GitHubRelease file is not found, pls check it!" && exit
         else
             chmod +x ${ScriptDir}/GitHubRelease
-            sleep 8
-            push_tag || echo "ERROR: Failed again, Tag is already exists!"
+            sleep 2
+            push_tag || err "ERROR: Failed again, Tag is already exists!"
         fi
     fi
     if [[ $(push_tar) == "ERROR: Failed to push files!" ]]; then
         if ! [[ -f "${ScriptDir}/GitHubRelease" ]]; then
-            echo "ERROR: GitHubRelease file is not found, pls check it!" && exit
+            err "ERROR: GitHubRelease file is not found, pls check it!" && exit
         else
             chmod +x ${ScriptDir}/GitHubRelease
-            sleep 8
-            push_tar || echo "ERROR: Failed again, can't push ${ReleaseFileName} to github releases."
+            sleep 2
+            push_tar || err "ERROR: Failed again, can't push ${ReleaseFileName} to github releases."
         fi
     fi
 fi
+
+tg_post_msg "<b>Greenforce clang compilation finished!</b>
+<b>Clang version: </b><code>${ClangVersion}</code>
+<b>LLVM commit: </b><code>${LLVMCommitURL}</code>
+<b>Binutils version: </b><code>${BinutilsVersion}</code>
+<b>GitHub release: </b><code>${GitHubLinkReleases}</code>
+<b>Build took</b> <code>${BuildDiffMsg}</code>"
