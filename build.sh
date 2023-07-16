@@ -127,8 +127,9 @@ cp -r ../install/* .
 [[ ! -e README.md ]] && wget https://github.com/greenforce-project/clang-llvm/raw/763e83ec123f3d9be6b05956327c7a84808a63fa/README.md
 sed -i "s/AboutHostCompability/${READMEmsg}/g" ${ScriptDir}/clang-llvm/README.md
 CommitMessage=$(echo "
-Clang version: $(cat ${ScriptDir}/build-info/clang)
-Binutils version: $(cat ${ScriptDir}/build-info/ld)
+Clang version: $(cat ${ScriptDir}/build-info/clang),
+$(cat ${ScriptDir}/build-info/ld)
+Binutils version: ${BinutilsVersion}
 LLVM repo commit: ${CommitMessage}
 Link: ${LLVMCommitURL}
 
@@ -200,7 +201,7 @@ if [[ $status != failed ]]; then
 fi
 
 tg_post_msg "<b>Greenforce clang compilation finished!</b>
-<b>Clang version: </b><code>${ClangVersion}</code>
+<b>Clang version: </b><code>$(cat ${ScriptDir}/build-info/clang)</code>
 <b>LLVM commit: </b><code>${LLVMCommitURL}</code>
 <b>Binutils version: </b><code>${BinutilsVersion}</code>
 <b>GitHub release: </b><code>${GitHubLinkReleases}</code>
