@@ -111,7 +111,6 @@ ShortLLVMCommit="$(git rev-parse --short HEAD)"
 popd
 mkdir -p "${ScriptDir}/build-info"
 echo "$(install/bin/clang --version | head -n1)" > "${ScriptDir}/build-info/clang"
-echo "$(install/bin/ld.lld --version | head -n1)" > "${ScriptDir}/build-info/ld"
 LLVMCommitURL="https://github.com/llvm/llvm-project/commit/${ShortLLVMCommit}"
 BinutilsVersion="$(ls | grep "^binutils-" | sed "s/binutils-//g")"
 ClangVersion="$(install/bin/clang --version | head -n1 | cut -d' ' -f4)"
@@ -127,8 +126,7 @@ cp -r ../install/* .
 [[ ! -e README.md ]] && wget https://github.com/greenforce-project/clang-llvm/raw/763e83ec123f3d9be6b05956327c7a84808a63fa/README.md
 sed -i "s/AboutHostCompability/${READMEmsg}/g" ${ScriptDir}/clang-llvm/README.md
 CommitMessage=$(echo "
-Clang version: $(cat ${ScriptDir}/build-info/clang),
-$(cat ${ScriptDir}/build-info/ld)
+Clang version: $(cat ${ScriptDir}/build-info/clang)
 Binutils version: ${BinutilsVersion}
 LLVM repo commit: ${CommitMessage}
 Link: ${LLVMCommitURL}
@@ -159,7 +157,7 @@ fi
 popd
 
 # Push to github releases
-tar -czvf "${ReleaseFileName}" ${ScriptDir}/clang-llvm/*
+tar -czf "${ReleaseFileName}" ${ScriptDir}/clang-llvm/*
 [[ -e "${ScriptDir}/${ReleaseFileName}" ]] && ReleasePathFile="${ScriptDir}/${ReleaseFileName}"
 if [[ $status != failed ]]; then
     push_tag() {
