@@ -1,6 +1,7 @@
 env:
     TZ: Asia/Jakarta
     GH_TOKEN: ENCRYPTED[c4bb0e3f71ae05d66212a1a2df9be6b8e106cd4b5e288de51d909560f47b97e809f942fe310adacdd4f429fdee3f1147]
+    GL_TOKEN: ENCRYPTED[4a7f726f717624b1e077e2948e342fcbc26daa380bfe2724f133f29f6427a6b5fd1196c52d0209cbbabc242e7e1a0d44]
     TOKEN: ENCRYPTED[d01ea3b93da2c1d65867604ca823b21597c37b70f0d0d9ff2499c51110e255e49fca5c78a793b8e7fb95c0e3cb9e179f]
     CHATID: "1201257517"
 
@@ -12,8 +13,11 @@ task:
       cpu: 8
       memory: 32G
 
-  Get-deps_script:
-      - bash ci.sh deps
+  Get-hooks_script:
+      - mkdir -p ~/.git/hooks
+      - git config --global core.hooksPath ~/.git/hooks
+      - curl -Lo ~/.git/hooks/commit-msg https://review.lineageos.org/tools/hooks/commit-msg
+      - chmod u+x ~/.git/hooks/commit-msg
 
   Deploy-builder_script:
       - bash build.sh
